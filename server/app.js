@@ -24,6 +24,7 @@ require('./models/post')
 
 app.use(express.json()) //--To parse the incoming post requests to JSON format.
 app.use(require('./routes/auth'))
+app.use(require('./routes/post'))
 
 
 app.listen(PORT,()=>{
