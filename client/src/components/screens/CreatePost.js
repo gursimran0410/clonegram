@@ -1,21 +1,91 @@
-import React from 'react'
+import React,{useState,useEffect} from 'react'
+import M from 'materialize-css'
+import {useHistory} from 'react-router-dom'
 
 const CreatePost = ()=>{
+    const history = useHistory()
+    const [title,setTitle] = useState("")
+    const [body,setBody] = useState("")
+    const [image,setImage] = useState("")
+    const [url,setUrl] = useState("")
+
+    //This useEffect will only run when there will be any changes in the URL
+    //to run the code in the a synchronous way.
+    useEffect(()=>{
+        if(url){
+            fetch("/createpost",{
+                method:"post",
+                headers:{
+                    "Content-Type":"application/json",
+                    "Authorization":"Bearer "+ localStorage.getItem("jwt")
+                },
+                body:JSON.stringify({
+                    title,
+                    body,
+                    pic:url
+                })
+            })
+            .then(res=>res.json())
+            .then(data=>{
+                console.table(data)
+                if(data.error){
+                    M.toast({html:data.error,classes:"#c62828 red darken-3"})
+                }
+                else{
+                    M.toast({html:"Post Created successfully",classes:"#43a047 green darken-1"})
+                    history.push('/')
+                }
+            }).catch(err=>{
+                console.log(err)
+            })
+        }
+    })
+    const postDetails = ()=>{
+        const data = new FormData()
+        data.append("file",image)
+        data.append("upload_preset","clonegram")
+        data.append("cloud_name","clone-gram")
+        fetch("https://api.cloudinary.com/v1_1/clone-gram/image/upload",{
+            method:"post",
+            body:data
+        })
+        .then(res=>res.json())
+        .then(data=>{
+            setUrl(data.url)
+        })
+        .catch(err=>{
+            console.log(err)
+        })
+    }
+
     return(
         <div className="Card input-filled"
-         style={{margin:"30px auto",maxWidth:"500px",
-                padding:"20px",textAlign:"center"}}>
-            <input type="text" placeholder="title"/>
-            <input type="text" placeholder="body"/>
+         style={{margin:"30px auto",
+                maxWidth:"500px",
+                padding:"20px",
+                textAlign:"center"}}
+            >
+            <input type="text" 
+                   placeholder="title"
+                   value={title} 
+                   onChange={(e)=>setTitle(e.target.value)}
+                />
+            <input type="text" 
+                   placeholder="body"
+                   value={body} 
+                   onChange={(e)=>setBody(e.target.value)}
+                />
             <div className="file-field input-field">
                 <div className="btn #64b5f6 blue lighten-2">
-                    <span>Uoload Image</span>
-                    <input type="file" multiple/>
+                    <span>Upload Image</span>
+                    <input type="file"
+                     onChange={(e)=>setImage(e.target.files[0])}/>
                 </div>
                 <div className="file-path-wrapper">
                     <input className="file-path validate" type="text" placeholder="Upload one or more files"/>
                 </div>
-                <button className="btn waves-effect waves-light #64b5f6 blue lighten-2">
+                <button className="btn waves-effect waves-light #64b5f6 blue lighten-2"
+                onClick={()=>postDetails()}>
                     Submit Post
                 </button>
             </div>
